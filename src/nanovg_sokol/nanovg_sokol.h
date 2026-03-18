@@ -7053,7 +7053,7 @@ typedef struct SGNVGfragUniforms SGNVGfragUniforms;
 #define NANOVG_SG_PIPELINE_CACHE_SIZE 32
 
 struct SGNVGpipelineCacheKey {
-    uint16_t blend;         // cached as `src_factor_rgb | (dst_factor_rgb << 4) | (src_factor_alpha << 8) | (dst_factor_alpha << 12)`
+    uint32_t blend;         // cached as `src_factor_rgb | (dst_factor_rgb << 4) | (src_factor_alpha << 8) | (dst_factor_alpha << 12)`
     uint16_t lastUse;      // updated on each read
 };
 typedef struct SGNVGpipelineCacheKey SGNVGpipelineCacheKey;
@@ -7223,13 +7223,13 @@ static int sgnvg__deleteTexture(SGNVGcontext* sg, int id)
     return 0;
 }
 
-static uint16_t sgnvg__getCombinedBlendNumber(sg_blend_state blend)
+static uint32_t sgnvg__getCombinedBlendNumber(sg_blend_state blend)
 {
     SGNVG_INTLOG("sgnvg__getCombinedBlendNumber(%d, %d, %d, %d)\n", blend.src_factor_rgb, blend.dst_factor_rgb, blend.src_factor_alpha, blend.dst_factor_alpha);
 #if __STDC_VERSION__ >= 201112L
-    _Static_assert(_SG_BLENDFACTOR_NUM <= 17, "too many blend factors for 16-bit blend number");
+    _Static_assert(_SG_BLENDFACTOR_NUM <= 33, "too many blend factors for 32-bit blend number");
 #else
-    assert(_SG_BLENDFACTOR_NUM <= 17);  // can be a _Static_assert
+    assert(_SG_BLENDFACTOR_NUM <= 33);  // can be a _Static_assert
 #endif
     return blend.src_factor_rgb | (blend.dst_factor_rgb << 4) | (blend.src_factor_alpha << 8) | (blend.dst_factor_alpha << 12);
 }
@@ -7282,9 +7282,9 @@ static bool sgnvg__pipelineTypeIsInUse(SGNVGcontext* sg, SGNVGpipelineType type)
     return false;
 }
 
-static int sgnvg__getIndexFromCache(SGNVGcontext* sg, uint16_t blendNumber)
+static int sgnvg__getIndexFromCache(SGNVGcontext* sg, uint32_t blendNumber)
 {
-    SGNVG_INTLOG("sgnvg__getIndexFromCache(sg: %p, blendNumber: %d)\n", sg, blendNumber);
+    SGNVG_INTLOG("sgnvg__getIndexFromCache(sg: %p, blendNumber: %u)\n", sg, blendNumber);
     uint16_t currentUse = sg->pipelineCache.currentUse;
 
     int maxAge = 0;
